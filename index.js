@@ -12,7 +12,7 @@ app.use(express.json());
 
 // CORS Configuration
 app.use(cors({
-  origin: '*', // Allow all origins. For enhanced security, specify your Roblox game's domain.
+  origin: '*', // For enhanced security, specify your Roblox game's domain
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-api-key']
 }));
@@ -56,7 +56,7 @@ app.post('/queue/add', (req, res) => {
 
   return res.status(200).json({
     success: true,
-    message: `Player ${name} (${userId}) joined the queue!`,
+    message: `Player ${name} (${userId}) added to the queue!`,
     queueSize: queue.length
   });
 });
@@ -82,7 +82,7 @@ app.post('/queue/remove', (req, res) => {
     });
   }
 
-  // Remove the player from the queue
+  // Remove player from the queue
   const removedPlayer = queue.splice(playerIndex, 1)[0];
   console.log(`Player removed from queue: ${removedPlayer.name} (${removedPlayer.userId})`);
 
@@ -98,24 +98,22 @@ app.post('/queue/assign', (req, res) => {
   const { count } = req.body;
 
   // Validate request body
-  if (typeof count !== 'number' || count <= 0) {
+  if (count === undefined || typeof count !== 'number' || count <= 0) {
     return res.status(400).json({
       success: false,
-      message: 'Invalid count value.'
+      message: 'Invalid or missing "count" in request body.'
     });
   }
 
-  // Assign players from the queue
-  const assignedPlayers = queue.slice(0, count).map(player => player.userId);
-  queue = queue.slice(count);
+  // Assign players up to the requested count
+  const assignedPlayers = queue.slice(0, count);
+  queue = queue.slice(count); // Remove assigned players from the queue
 
-  console.log(`Assigned players: ${assignedPlayers.join(', ')}`);
-  console.log(`Current queue size: ${queue.length}`);
+  console.log(`Assigned players: ${assignedPlayers.map(p => p.name).join(', ')}`);
 
   return res.status(200).json({
     success: true,
-    assignedPlayers,
-    queueSize: queue.length
+    assignedPlayers: assignedPlayers.map(p => p.userId)
   });
 });
 
@@ -131,12 +129,12 @@ app.post('/match/end', (req, res) => {
     });
   }
 
-  // Handle match end logic here (e.g., logging, updating database)
-  console.log(`Match ended for serverId: ${serverId}`);
+  // Handle match end logic as needed
+  console.log(`Match ended for server: ${serverId}`);
 
   return res.status(200).json({
     success: true,
-    message: `Match ended for serverId: ${serverId}.`
+    message: `Match end acknowledged for server ${serverId}.`
   });
 });
 
