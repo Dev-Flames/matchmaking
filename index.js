@@ -1,55 +1,65 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const app = express();
-const port = process.env.PORT || 3000;
+/**
+ * index.js
+ * Minimal Node/Express server for a Roblox queue system.
+ * 
+ * - /joinQueue (POST) : Add player to an in-memory queue
+ * - /listQueue (GET)  : View current queue
+ */
 
-// In-memory queue for demonstration.
-// For production, you likely want a real database.
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+app.use(express.json());  // Parse JSON bodies
+app.use(cors());          // Allow cross-origin (including from Roblox)
+
+// In-memory queue array (for demo). In production, use a database!
 let queue = [];
 
-// Middleware to parse JSON in requests
-app.use(bodyParser.json());
-
-// Endpoint to add a player to the queue
+// ========== 1) POST /joinQueue ==========
+// Roblox sends { userId, playerName } to join the queue
 app.post('/joinQueue', (req, res) => {
-  const { userId } = req.body; 
-  if (!userId) {
-    return res.status(400).send({ error: 'userId is required' });
+  const { userId, playerName } = req.body;
+
+  // Basic validation
+  if (!userId || !playerName) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Missing userId or playerName in request body." 
+    });
   }
 
-  // Check if user already in queue
-  if (!queue.includes(userId)) {
-    queue.push(userId);
+  // Check if player is already in the queue
+  const alreadyInQueue = queue.find(p => p.userId === userId);
+  if (alreadyInQueue) {
+    return res.json({
+      success: false,
+      message: `Player ${playerName} is already in the queue.`
+    });
   }
 
-  console.log(`User ${userId} joined the queue.`);
-  return res.status(200).send({ message: 'Joined queue successfully' });
+  // Add to queue
+  queue.push({ userId, playerName });
+  console.log(`Player joined queue: ${playerName} (${userId})`);
+
+  return res.json({
+    success: true,
+    message: `Player ${playerName} (${userId}) joined the queue!`,
+    queueSize: queue.length
+  });
 });
 
-// Endpoint to get the current queue (for debugging or verification)
-app.get('/queue', (req, res) => {
-  res.status(200).send({ queue });
+// ========== 2) GET /listQueue ==========
+// Quick endpoint to see who is in the queue (for debugging)
+app.get('/listQueue', (req, res) => {
+  return res.json({
+    success: true,
+    queue
+  });
 });
 
-// Endpoint to pop a group of players from the queue
-// For example, if you want to group them in sets of 4
-app.post('/matchmake', (req, res) => {
-  const { groupSize } = req.body;
-  if (!groupSize) {
-    return res.status(400).send({ error: 'groupSize is required' });
-  }
-
-  // Check if we have enough players
-  if (queue.length >= groupSize) {
-    // Extract the first `groupSize` players
-    const matchedPlayers = queue.splice(0, groupSize);
-    console.log(`Matched players: ${matchedPlayers}`);
-    return res.status(200).send({ matchedPlayers });
-  } else {
-    return res.status(200).send({ matchedPlayers: [] });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Matchmaking server running on port ${port}`);
+// ========== Start Server on Heroku's Port ==========
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Roblox Queue Server running on port ${PORT}`);
 });
