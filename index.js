@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(cors({
   origin: '*', // Allow all origins. For enhanced security, specify your Roblox game's domain.
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-api-key']
 }));
 
 // Handle preflight OPTIONS requests
