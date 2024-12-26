@@ -29,15 +29,15 @@ app.get('/', (req, res) => {
   res.json({ message: 'Roblox Queue Server is operational.' });
 });
 
-// POST /joinQueue Route
-app.post('/joinQueue', (req, res) => {
-  const { userId, playerName } = req.body;
+// POST /queue/add Route
+app.post('/queue/add', (req, res) => {
+  const { userId, name } = req.body;
 
   // Validate request body
-  if (!userId || !playerName) {
+  if (!userId || !name) {
     return res.status(400).json({
       success: false,
-      message: 'Missing userId or playerName in request body.'
+      message: 'Missing userId or name in request body.'
     });
   }
 
@@ -46,18 +46,97 @@ app.post('/joinQueue', (req, res) => {
   if (existingPlayer) {
     return res.status(409).json({
       success: false,
-      message: `Player ${playerName} is already in the queue.`
+      message: `Player ${name} is already in the queue.`
     });
   }
 
   // Add player to the queue
-  queue.push({ userId, playerName });
-  console.log(`Player joined queue: ${playerName} (${userId})`);
+  queue.push({ userId, name });
+  console.log(`Player joined queue: ${name} (${userId})`);
 
   return res.status(200).json({
     success: true,
-    message: `Player ${playerName} (${userId}) joined the queue!`,
+    message: `Player ${name} (${userId}) joined the queue!`,
     queueSize: queue.length
+  });
+});
+
+// POST /queue/remove Route
+app.post('/queue/remove', (req, res) => {
+  const { userId } = req.body;
+
+  // Validate request body
+  if (!userId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing userId in request body.'
+    });
+  }
+
+  // Find the player in the queue
+  const playerIndex = queue.findIndex(player => player.userId === userId);
+  if (playerIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      message: `Player with userId ${userId} is not in the queue.`
+    });
+  }
+
+  // Remove the player from the queue
+  const removedPlayer = queue.splice(playerIndex, 1)[0];
+  console.log(`Player removed from queue: ${removedPlayer.name} (${removedPlayer.userId})`);
+
+  return res.status(200).json({
+    success: true,
+    message: `Player ${removedPlayer.name} (${removedPlayer.userId}) removed from the queue.`,
+    queueSize: queue.length
+  });
+});
+
+// POST /queue/assign Route
+app.post('/queue/assign', (req, res) => {
+  const { count } = req.body;
+
+  // Validate request body
+  if (typeof count !== 'number' || count <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid count value.'
+    });
+  }
+
+  // Assign players from the queue
+  const assignedPlayers = queue.slice(0, count).map(player => player.userId);
+  queue = queue.slice(count);
+
+  console.log(`Assigned players: ${assignedPlayers.join(', ')}`);
+  console.log(`Current queue size: ${queue.length}`);
+
+  return res.status(200).json({
+    success: true,
+    assignedPlayers,
+    queueSize: queue.length
+  });
+});
+
+// POST /match/end Route (Optional)
+app.post('/match/end', (req, res) => {
+  const { serverId } = req.body;
+
+  // Validate request body
+  if (!serverId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing serverId in request body.'
+    });
+  }
+
+  // Handle match end logic here (e.g., logging, updating database)
+  console.log(`Match ended for serverId: ${serverId}`);
+
+  return res.status(200).json({
+    success: true,
+    message: `Match ended for serverId: ${serverId}.`
   });
 });
 
