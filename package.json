@@ -1,14 +1,13 @@
 {
-  "name": "roblox-matchmaking-server",
+  "name": "roblox-queue-server",
   "version": "1.0.0",
-  "description": "A matchmaking server for Roblox games.",
+  "description": "Node.js server for Roblox matchmaking queue",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "body-parser": "^1.19.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
   }
 }
