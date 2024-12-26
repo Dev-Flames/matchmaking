@@ -30,6 +30,7 @@ app.get('/', (req, res) => {
 });
 
 // POST /queue/add Route
+// POST /queue/add Route
 app.post('/queue/add', (req, res) => {
   const { userId, name } = req.body;
 
@@ -60,6 +61,7 @@ app.post('/queue/add', (req, res) => {
     queueSize: queue.length
   });
 });
+
 
 // POST /queue/remove Route
 app.post('/queue/remove', (req, res) => {
