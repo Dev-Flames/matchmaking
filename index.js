@@ -1,34 +1,35 @@
+// index.js
 /**
- * index.js
- * Full Node/Express server for Roblox queue.
- * - GET    /           : Root route to avoid 404
- * - POST   /joinQueue  : Accepts JSON from Roblox, adds player to an in-memory queue
- * - GET    /listQueue  : Returns the current queue (for debugging)
+ * Node.js server for Roblox matchmaking queue
  */
 
 const express = require('express');
 const cors = require('cors');
 const app = express();
 
-// 1. Middleware to parse JSON bodies
+// Middleware to parse JSON bodies
 app.use(express.json());
 
-// 2. CORS Configuration
+// CORS Configuration
 app.use(cors({
-  origin: '*', // Allow all origins. For more security, specify your Roblox game's domain.
+  origin: '*', // Allow all origins. For enhanced security, specify your Roblox game's domain.
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
-// 3. In-memory queue (use a database like Redis or PostgreSQL for production)
+// Handle preflight OPTIONS requests
+app.options('*', cors());
+
+// In-memory queue (for demonstration purposes)
+// For production, consider using a persistent database like Redis or PostgreSQL
 let queue = [];
 
-// ============ Root Route (GET /) ============
+// Root Route to prevent "Cannot GET /" error
 app.get('/', (req, res) => {
   res.json({ message: 'Roblox Queue Server is operational.' });
 });
 
-// ============ POST /joinQueue ============
+// POST /joinQueue Route
 app.post('/joinQueue', (req, res) => {
   const { userId, playerName } = req.body;
 
@@ -41,8 +42,8 @@ app.post('/joinQueue', (req, res) => {
   }
 
   // Check if player is already in the queue
-  const exists = queue.find(player => player.userId === userId);
-  if (exists) {
+  const existingPlayer = queue.find(player => player.userId === userId);
+  if (existingPlayer) {
     return res.status(409).json({
       success: false,
       message: `Player ${playerName} is already in the queue.`
@@ -60,15 +61,15 @@ app.post('/joinQueue', (req, res) => {
   });
 });
 
-// ============ GET /listQueue ============
+// GET /listQueue Route (for debugging)
 app.get('/listQueue', (req, res) => {
-  return res.status(200).json({
+  res.json({
     success: true,
     queue
   });
 });
 
-// ============ Start Server on Heroku's Port ============
+// Start the server on Heroku's assigned port or localhost:3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Roblox Queue Server running on port ${PORT}`);
