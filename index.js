@@ -1,4 +1,3 @@
-// index.js
 /**
  * Node.js server for Roblox matchmaking queue
  */
@@ -20,6 +19,23 @@ app.use(cors({
 // Handle preflight OPTIONS requests
 app.options('*', cors());
 
+// Middleware to check API key
+const authenticate = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  const VALID_API_KEY = process.env.API_KEY;
+
+  if (!VALID_API_KEY) {
+    console.error('API_KEY environment variable not set.');
+    return res.status(500).json({ success: false, message: 'Server configuration error.' });
+  }
+
+  if (apiKey === VALID_API_KEY) {
+    next();
+  } else {
+    res.status(403).json({ success: false, message: 'Forbidden: Invalid API Key.' });
+  }
+};
+
 // In-memory queue (for demonstration purposes)
 // For production, consider using a persistent database like Redis or PostgreSQL
 let queue = [];
@@ -30,8 +46,7 @@ app.get('/', (req, res) => {
 });
 
 // POST /queue/add Route
-// POST /queue/add Route
-app.post('/queue/add', (req, res) => {
+app.post('/queue/add', authenticate, (req, res) => {
   const { userId, name } = req.body;
 
   // Validate request body
@@ -62,9 +77,8 @@ app.post('/queue/add', (req, res) => {
   });
 });
 
-
 // POST /queue/remove Route
-app.post('/queue/remove', (req, res) => {
+app.post('/queue/remove', authenticate, (req, res) => {
   const { userId } = req.body;
 
   // Validate request body
@@ -96,7 +110,7 @@ app.post('/queue/remove', (req, res) => {
 });
 
 // POST /queue/assign Route
-app.post('/queue/assign', (req, res) => {
+app.post('/queue/assign', authenticate, (req, res) => {
   const { count } = req.body;
 
   // Validate request body
@@ -120,7 +134,7 @@ app.post('/queue/assign', (req, res) => {
 });
 
 // POST /match/end Route (Optional)
-app.post('/match/end', (req, res) => {
+app.post('/match/end', authenticate, (req, res) => {
   const { serverId } = req.body;
 
   // Validate request body
@@ -141,11 +155,16 @@ app.post('/match/end', (req, res) => {
 });
 
 // GET /listQueue Route (for debugging)
-app.get('/listQueue', (req, res) => {
+app.get('/listQueue', authenticate, (req, res) => {
   res.json({
     success: true,
     queue
   });
+});
+
+// Handle undefined routes
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Endpoint not found' });
 });
 
 // Start the server on Heroku's assigned port or localhost:3000
