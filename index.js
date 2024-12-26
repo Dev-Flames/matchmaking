@@ -19,6 +19,12 @@ app.use(cors({
 // Handle preflight OPTIONS requests
 app.options('*', cors());
 
+// Logging Middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // Middleware to check API key
 const authenticate = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
@@ -40,7 +46,7 @@ const authenticate = (req, res, next) => {
 // For production, consider using a persistent database like Redis or PostgreSQL
 let queue = [];
 
-// Root Route to prevent "Cannot GET /" error
+// Root Route to confirm server is operational
 app.get('/', (req, res) => {
   res.json({ message: 'Roblox Queue Server is operational.' });
 });
