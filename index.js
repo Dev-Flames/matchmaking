@@ -49,7 +49,7 @@ let queue = [];
 
 // Root Route to confirm server is operational
 app.get('/', (req, res) => {
-  res.json({ message: 'Roblox Queue Server is operational.' });
+  res.json({ message: 'The Pillars of Events Queue System!' });
 });
 
 // POST /queue/add Route
